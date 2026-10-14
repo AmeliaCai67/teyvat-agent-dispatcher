@@ -72,7 +72,7 @@ id: 20261013-1415-001
 from: codex
 to: claude
 type: handoff          # handoff | report | question | ack | close
-thread: philia-staging-revision
+thread: hero-refactor-20260101
 ref: 20261013-1257-001 # report 指回它的 handoff
 created: 2026-10-13T06:15:00Z
 ---
