@@ -43,3 +43,54 @@ node src/sentinel.mjs
 3. **执行命令** —— 这里用 `echo` 演示；真实场景换成 `claude -p` / `codex exec` 等。
 
 ★ **其余的照抄即可。**
+
+---
+
+## ★ 实测输出（这个最小实现真的跑过）
+
+```console
+$ ./src/dispatch.sh --from alice --to bob --thread demo-001 -- sh -c 'echo "hello from bob"; echo "第二行"'
+▶ handoff 20261014-1342-001 → 日志 leylines/logs/20261014-1342-001.log
+✓ 完成（退出码 0）
+
+$ node src/leyline.mjs list
+[  ] 20261014-1342-001  alice→bob  handoff  demo-001
+[  ] 20261014-1342-002  bob→alice  report  demo-001     ← ★ report 自动落档 ✓
+
+$ cat leylines/logs/20261014-1342-001.log
+### command: sh -c echo "hello from bob"; echo "第二行"
+### started: 2026-10-14T05:42:49Z
+hello from bob
+第二行
+```
+
+**★ 非法边会被拒绝，并把合法边列出来：**
+
+```console
+$ ./src/dispatch.sh --from alice --to carol --thread bad -- echo hi
+✗ 留档失败: 非法派活边 alice>carol
+  当前合法边：
+    alice>bob
+    bob>carol
+    carol>alice
+✗ 留档失败，命令【未执行】（fail-closed）
+```
+
+**★ 被派方在忙时会被挡下来：**
+
+```console
+$ ./src/dispatch.sh --from alice --to bob --thread busy -- echo hi
+✗ bob 正在跑（dispatch/working @ 2026-10-14T05:42:50.114Z）—— 等它结束，或加 --force 强行派
+```
+
+**★ 退出码约定**（★ 让调用方可以判断发生了什么）：
+
+| 退出码 | 含义 |
+|---:|---|
+| 0 | 正常（其实是**被调命令**的退出码原样传出）|
+| 2 | 参数不全 |
+| 3 | 被派方在忙（未加 `--force`）|
+| 4 | **留档失败 ⇒ 命令未执行**（fail-closed）|
+
+**★ 而 fail-closed 是实测过的** —— 故意用非法边派一条 `touch` 命令，
+**文件确实没有生成** ✓。
