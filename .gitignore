@@ -1,0 +1,7 @@
+# 真实数据绝不进仓库 —— 仓库只放【机制】，不放任何一次真实的派活
+leylines/
+*.log
+*.jsonl
+.env
+.DS_Store
+node_modules/
